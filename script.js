@@ -153,7 +153,7 @@ async function buscarJuegoEnInternet() {
             fecha: `ID Steam: ${item.id}`,
             resumen: "Haz clic aquí para cargar la sinopsis completa, desarrollador y sus últimas noticias.",
             detalleCompleto: "Cargando descripción oficial del juego...",
-            url: `https://steampowered.com{item.id}`,
+            url: ["https://store", "steampowered", "com"].join(".") + "/app/" + item.id,
             esBusquedaGlobal: true
         }));
 
@@ -174,11 +174,12 @@ async function cargarFichaCompletaJuego(item) {
     
     try {
         // 1. Obtener de qué trata el juego (AppDetails)
-        const detailsApi = `https://steampowered.com{item.appid}&l=spanish`;
-        const proxyDetails = `https://allorigins.win{encodeURIComponent(detailsApi)}`;
-        const respDetails = await fetch(proxyDetails);
-        const proxyJson = await respDetails.json();
-        const appData = JSON.parse(proxyJson.contents)[item.appid];
+            const dominioStore = ["https://store", "steampowered", "com"].join(".");
+      const detailsApi = dominioStore + "/api/appdetails?appids=" + item.appid + "&l=spanish";
+      const respDetails = await fetch("/api/proxy?url=" + encodeURIComponent(detailsApi));
+      const rawDetails = await respDetails.json();
+      const appData = rawDetails[item.appid];
+
 
         let textoFinal = "";
 
@@ -197,14 +198,14 @@ async function cargarFichaCompletaJuego(item) {
         }
 
         // 2. Obtener la última noticia o actualización si existe
-        const newsApi = "https://steampowered.com" + `/ISteamNews/GetNewsForApp/v2/?appid=${item.appid}&count=1&maxlength=400`;
-        const proxyNews = "https://allorigins.win" + `/get?url=${encodeURIComponent(newsApi)}`;
-        const respNews = await fetch(proxyNews);
-        const newsProxyJson = await respNews.json();
-        const newsData = JSON.parse(newsProxyJson.contents);
+             const dominioApi = ["https://api", "steampowered", "com"].join(".");
+      const newsApi = dominioApi + "/ISteamNews/GetNewsForApp/v2/?appid=" + item.appid + "&count=1&maxlength=400";
+      const respNews = await fetch("/api/proxy?url=" + encodeURIComponent(newsApi));
+      const newsData = await respNews.json();
 
         if (newsData.appnews && newsData.appnews.newsitems && newsData.appnews.newsitems.length > 0) {
-            const ultimaNoticia = newsData.appnews.newsitems;
+            const ultimaNoticia = newsData.appnews.newsitems[0];
+
             const limpio = ultimaNoticia.contents.replace(/<[^>]*>?/gm, "").trim();
             textoFinal += `\n────────────────────\n📰 ÚLTIMA ACTUALIZACIÓN / NOTICIA:\n${ultimaNoticia.title}\n\n${limpio}`;
         } else {
