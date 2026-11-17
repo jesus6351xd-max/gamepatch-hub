@@ -49,15 +49,16 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
 
         elif self.path.startswith('/api/translate?text='):
             partes = self.path.split('text=', 1)
-            texto = urllib.parse.unquote(partes.pop())[:900]
+            texto = urllib.parse.unquote(partes.pop()).strip()
+            lineas_limpias = [l.strip() for l in texto.splitlines() if l.strip() and not l.startswith("───")]
+            texto_corto = " ".join(lineas_limpias)[:450]
             try:
-                dominio = ".".join(["translate", "googleapis", "com"])
-                ruta = "/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=" + urllib.parse.quote(texto)
+                dominio = ".".join(["api", "mymemory", "translated", "net"])
+                ruta = "/get?q=" + urllib.parse.quote(texto_corto) + "&langpair=autodetect|es"
                 req = urllib.request.Request("https://" + dominio + ruta, headers={'User-Agent': 'Mozilla/5.0'})
                 with urllib.request.urlopen(req, timeout=10) as response:
                     raw = json.loads(response.read().decode('utf-8'))
-                    bloques = next(iter(raw))
-                    traducido = "".join([next(iter(b)) for b in bloques if isinstance(b, list) and b])
+                    traducido = raw.get('responseData', {}).get('translatedText', '')
                     self.send_response(200)
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
