@@ -10,7 +10,7 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/api/proxy?url='):
             partes = self.path.split('url=', 1)
-           target_url = urllib.parse.unquote(partes[1])
+            target_url = urllib.parse.unquote(partes[1])
             try:
                 req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0'})
                 with urllib.request.urlopen(req, timeout=10) as response:
