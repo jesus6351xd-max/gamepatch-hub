@@ -47,18 +47,18 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(str(e).encode())
 
-        elif self.path.startswith('/api/translate?text='):
-            partes = self.path.split('text=', 1)
-            texto = urllib.parse.unquote(partes.pop())[:1500]
-            try:
-                dominio = ".".join(["translate", "googleapis", "com"])
-                ruta = "/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=" + urllib.parse.quote(texto)
-                req = urllib.request.Request("https://" + dominio + ruta, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    raw = json.loads(response.read().decode('utf-8'))
-                    bloques = raw.pop(0)
-                    traducido = "".join([b.pop(0) for b in bloques if b])
-                    self.send_response(200)
+                   elif self.path.startswith('/api/translate?text='):
+                    partes = self.path.split('text=', 1)
+                    texto = urllib.parse.unquote(partes.pop())[:900]
+                    try:
+                        dominio = ".".join(["translate", "googleapis", "com"])
+                        ruta = "/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=" + urllib.parse.quote(texto)
+                        req = urllib.request.Request("https://" + dominio + ruta, headers={'User-Agent': 'Mozilla/5.0'})
+                        with urllib.request.urlopen(req, timeout=10) as response:
+                            raw = json.loads(response.read().decode('utf-8'))
+                            bloques = next(iter(raw))
+                            traducido = "".join([next(iter(b)) for b in bloques if isinstance(b, list) and b])
+                            self.send_response(200)
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
                     self.wfile.write(json.dumps({'translated': traducido}).encode('utf-8'))
@@ -66,6 +66,7 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(500)
                 self.end_headers()
                 self.wfile.write(str(e).encode())
+
         else:
             super().do_GET()
 
