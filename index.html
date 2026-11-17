@@ -3,61 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GamePatch Hub | Enciclopedia y Parches en Vivo</title>
+    <title>GamePatch Hub - Actualizaciones de Videojuegos</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
         <div class="header-content">
-            <h1>🎮 GamePatch Hub</h1>
-            <p>Notas de parches, actualizaciones y ficha técnica de videojuegos</p>
-            <div class="status-bar">
-                <span id="estado-actualizacion">● Conectado</span>
-                <button id="btn-refrescar" onclick="forzarActualizacion()">🔄 Actualizar ahora</button>
-            </div>
+            <h1>🎮 GamePatch <span>Hub</span></h1>
+            <p>Parches, notas de actualización y fichas de videojuegos en tiempo real</p>
         </div>
     </header>
 
-    <section class="controles">
-        <nav class="tabs">
-            <button class="tab-btn active" onclick="cambiarPlataforma('xbox', this)">Xbox</button>
-            <button class="tab-btn" onclick="cambiarPlataforma('playstation', this)">PlayStation</button>
-            <button class="tab-btn" onclick="cambiarPlataforma('steam', this)">Steam (En Vivo)</button>
-            <button class="tab-btn" onclick="cambiarPlataforma('buscar_global', this)">🔍 Buscar Cualquier Juego</button>
-        </nav>
-
-        <div class="buscador-box" id="caja-filtro-local">
-            <input type="text" id="input-busqueda" placeholder="Filtrar juegos en esta lista..." oninput="filtrarNoticias()">
-        </div>
-
-        <div class="buscador-box oculto" id="caja-busqueda-global">
-            <div class="search-row">
-                <input type="text" id="input-juego-global" placeholder="Escribe el nombre de cualquier juego (ej. Sekiro, Resident Evil, Hollow Knight)..." onkeydown="if(event.key==='Enter') buscarJuegoEnInternet()">
-                <button class="btn-buscar-global" onclick="buscarJuegoEnInternet()">Buscar</button>
+    <main class="container">
+        <div class="tabs-bar">
+            <div class="tabs">
+                <button class="tab-btn active xbox" onclick="cambiarPlataforma('xbox', this)">Xbox</button>
+                <button class="tab-btn ps" onclick="cambiarPlataforma('playstation', this)">PlayStation</button>
+                <button class="tab-btn steam" onclick="cambiarPlataforma('steam', this)">Steam (En vivo)</button>
+                <button class="tab-btn global" onclick="cambiarPlataforma('buscar_global', this)">🔍 Buscar Cualquier Juego</button>
+                <button class="tab-btn favs" onclick="cambiarPlataforma('favoritos', this)">⭐ Favoritos (<span id="contador-favs">0</span>)</button>
             </div>
+            <button class="btn-vista" id="btn-cambiar-vista" onclick="alternarVista()">☰ Vista Compacta</button>
         </div>
-    </section>
 
-    <main id="contenedor-noticias">
-        <!-- Aquí se cargan las tarjetas -->
+        <div id="caja-filtro-local" class="search-box">
+            <input type="text" id="input-busqueda" placeholder="Filtrar juegos mostrados..." onkeyup="filtrarNoticias()">
+            <span id="estado-actualizacion" class="status-badge">● Listo</span>
+        </div>
+
+        <div id="caja-busqueda-global" class="search-box oculto">
+            <input type="text" id="input-juego-global" placeholder="Escribe cualquier juego (ej. Sekiro, Resident Evil, Elden Ring)..." onkeydown="if(event.key === 'Enter') buscarJuegoEnInternet()">
+            <button class="btn-buscar-global" onclick="buscarJuegoEnInternet()">Buscar</button>
+        </div>
+
+        <section id="contenedor-noticias" class="grid-noticias"></section>
     </main>
 
-    <!-- Ventana Modal con imagen, descripción de qué trata y último parche -->
     <div id="modal-detalle" class="modal oculto" onclick="cerrarModal(event)">
         <div class="modal-contenido">
-            <button class="cerrar-btn" onclick="cerrarModalDirecto()">✖</button>
-            <img id="modal-imagen" src="" alt="Portada del juego" class="modal-img oculto">
-            <span id="modal-etiqueta" class="badge">Plataforma</span>
+            <button class="cerrar-btn" onclick="cerrarModalDirecto()">✕</button>
+            <img id="modal-imagen" src="" alt="Portada" class="modal-img oculto">
+            <span id="modal-etiqueta" class="modal-tag">PLATAFORMA</span>
             <h2 id="modal-titulo">Título del Juego</h2>
-            <p id="modal-fecha" class="fecha">Info</p>
+            <p id="modal-fecha" class="modal-sub">Versión • Fecha</p>
+            
+            <div id="modal-galeria" class="galeria-capturas oculto"></div>
+
+            <div class="modal-acciones-texto">
+                <button id="btn-traducir" class="btn-traducir oculto" onclick="traducirContenidoModal()">🌐 Traducir notas al Español</button>
+            </div>
+
             <div id="modal-cuerpo" class="modal-texto"></div>
-            <a id="modal-link" href="#" target="_blank" class="btn-fuente">Ver ficha o nota oficial ↗</a>
+            <a id="modal-link" href="#" target="_blank" class="btn-oficial">Ver página oficial →</a>
         </div>
     </div>
-
-    <footer>
-        <p>Servidor corriendo en openEuler | Base de datos conectada en vivo</p>
-    </footer>
 
     <script src="script.js"></script>
 </body>
