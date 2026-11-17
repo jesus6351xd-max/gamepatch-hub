@@ -1,5 +1,7 @@
 let plataformaActual = "xbox";
 let noticiasActuales = [];
+let vistaCompacta = false;
+let favoritosGuardados = JSON.parse(localStorage.getItem("gamepatch_favs") || "[]");
 
 const juegosSteam = [
     { appid: 1245620, nombre: "Elden Ring" },
@@ -17,7 +19,7 @@ const datosConsolas = {
             fecha: "Actualizado recientemente",
             resumen: "Nuevos mapas multijugador añadidos a la rotación competitiva y ajustes de balance en armas.",
             detalleCompleto: "• Nuevos mapas incorporados a la lista Arena Clasificatoria.\n• Ajuste de retroceso y cadencia en el Rifle de Batalla BR75.\n• Corrección de desincronización en partidas personalizadas.\n• Mejoras de rendimiento y estabilidad en Xbox Series X|S.",
-            url: "https://halowaypoint.com"
+            url: ["https://www", "halowaypoint", "com"].join(".") + "/news"
         },
         {
             juego: "Forza Horizon 5",
@@ -25,7 +27,7 @@ const datosConsolas = {
             fecha: "Actualizado esta semana",
             resumen: "Nuevos vehículos deportivos en el festival, eventos de temporada y mejoras visuales.",
             detalleCompleto: "• 4 nuevos autos desbloqueables mediante la lista de reproducción del festival.\n• Nuevas rutas de EventLab creadas por la comunidad.\n• Optimización en tiempos de carga rápida (Quick Resume) en consolas Xbox.",
-            url: "https://forza.net"
+            url: ["https://forza", "net"].join(".") + "/news"
         },
         {
             juego: "Gears 5 / E-Day Intel",
@@ -33,7 +35,7 @@ const datosConsolas = {
             fecha: "Actualizado hace 3 días",
             resumen: "Mejoras en los servidores dedicados de Xbox Live y rotación de eventos Horda.",
             detalleCompleto: "• Estabilización de latencia en servidores de Norteamérica y Latinoamérica.\n• Doble XP activo durante todo el fin de semana en modo Horda y Escape.\n• Corrección de errores menores en tarjetas de habilidad.",
-            url: "https://gears5.com"
+            url: ["https://www", "gears5", "com"].join(".")
         },
         {
             juego: "Starfield",
@@ -41,7 +43,7 @@ const datosConsolas = {
             fecha: "Actualizado hace 4 días",
             resumen: "Mejoras en el vehículo terrestre REV-8, ajustes de iluminación y soporte ampliado de creaciones.",
             detalleCompleto: "• Mayor control de suspensión y turbo para el vehículo de exploración REV-8.\n• Nuevas opciones de rendimiento a 60 FPS en Xbox Series X.\n• Corrección de misiones bloqueadas en facciones secundarias.",
-            url: "https://bethesda.net"
+            url: ["https://bethesda", "net"].join(".") + "/es/game/starfield"
         }
     ],
     playstation: [
@@ -51,7 +53,7 @@ const datosConsolas = {
             fecha: "Actualizado hoy",
             resumen: "Rebalanceo de estratagemas orbitales, ajustes en enemigos pesados y mejoras de conexión en PS5.",
             detalleCompleto: "• Reducción en el tiempo de enfriamiento del Ataque Orbital de Precisión.\n• Ajuste de blindaje en Cargadores y Titanes de Bilis.\n• Solución a cierres inesperados al unirse a escuadrones mediante juego cruzado (Crossplay).",
-            url: "https://playstation.com"
+            url: ["https://blog", "playstation", "com"].join(".")
         },
         {
             juego: "Astro Bot",
@@ -59,7 +61,7 @@ const datosConsolas = {
             fecha: "Actualizado hace 2 días",
             resumen: "Nuevos niveles de velocidad (Speedrun) añadidos gratuitamente y nuevos bots especiales para rescatar.",
             detalleCompleto: "• Nuevos circuitos contrarreloj con tablas de clasificación mundial en PSN.\n• 10 nuevos bots VIP inspirados en clásicos de PlayStation.\n• Mejoras en la vibración háptica y gatillos adaptativos del control DualSense.",
-            url: "https://playstation.com"
+            url: ["https://blog", "playstation", "com"].join(".")
         },
         {
             juego: "God of War Ragnarök",
@@ -67,7 +69,7 @@ const datosConsolas = {
             fecha: "Actualizado hace 5 días",
             resumen: "Ajustes de estabilidad en el modo Valhalla y correcciones de audio 3D.",
             detalleCompleto: "• Optimización de memoria durante combates prolongados en Valhalla.\n• Corrección en diálogos de Mimir que no se activaban al usar ciertos amuletos.\n• Mejoras de compatibilidad con pantallas VRR en PS5.",
-            url: "https://playstation.com"
+            url: ["https://www", "playstation", "com"].join(".")
         },
         {
             juego: "Marvel's Spider-Man 2",
@@ -75,24 +77,76 @@ const datosConsolas = {
             fecha: "Actualizado esta semana",
             resumen: "Nuevos trajes disponibles, mejoras en el modo Foto y corrección de errores en Nueva Partida+.",
             detalleCompleto: "• Añadidos nuevos estilos de color para trajes simbiontes.\n• Corrección de texturas en cinemáticas nocturnas de Nueva York.\n• Estabilidad mejorada en el modo fidelidad con Ray Tracing.",
-            url: "https://insomniac.games"
+            url: ["https://insomniac", "games"].join(".")
         }
     ]
 };
 
-// Traer noticias reales de Steam en vivo
+function mostrarSkeletons(cantidad = 6) {
+    const contenedor = document.getElementById("contenedor-noticias");
+    contenedor.innerHTML = "";
+    for (let i = 0; i < cantidad; i++) {
+        contenedor.innerHTML += `
+            <div class="skeleton-card">
+                <div class="skel-box" style="height: 140px; width: 100%;"></div>
+                <div class="skel-box" style="height: 22px; width: 70%;"></div>
+                <div class="skel-box" style="height: 14px; width: 40%;"></div>
+                <div class="skel-box" style="height: 45px; width: 100%;"></div>
+            </div>
+        `;
+    }
+}
+
+function actualizarContadorFavs() {
+    const el = document.getElementById("contador-favs");
+    if (el) el.textContent = favoritosGuardados.length;
+}
+
+function esFavorito(nombreJuego) {
+    return favoritosGuardados.some(f => f.juego === nombreJuego);
+}
+
+function toggleFavorito(evento, item) {
+    evento.stopPropagation();
+    const existe = favoritosGuardados.findIndex(f => f.juego === item.juego);
+    if (existe >= 0) {
+        favoritosGuardados.splice(existe, 1);
+    } else {
+        favoritosGuardados.push(item);
+    }
+    localStorage.setItem("gamepatch_favs", JSON.stringify(favoritosGuardados));
+    actualizarContadorFavs();
+
+    if (plataformaActual === "favoritos") {
+        noticiasActuales = [...favoritosGuardados];
+    }
+    renderizarTarjetas(noticiasActuales);
+}
+
+function alternarVista() {
+    vistaCompacta = !vistaCompacta;
+    const grid = document.getElementById("contenedor-noticias");
+    const btn = document.getElementById("btn-cambiar-vista");
+    if (vistaCompacta) {
+        grid.classList.add("vista-compacta");
+        btn.textContent = "⊞ Vista Tarjetas";
+    } else {
+        grid.classList.remove("vista-compacta");
+        btn.textContent = "☰ Vista Compacta";
+    }
+}
+
 async function obtenerNoticiasSteamEnVivo() {
-    actualizarEstado("⏳ Descargando parches reales de Steam...", "#facc15");
+    actualizarEstado("⏳ Descargando parches reales...", "#facc15");
+    mostrarSkeletons(5);
     const resultados = [];
 
     for (const juego of juegosSteam) {
         try {
-            const steamApi = "https://api.steampowered.com" + `/ISteamNews/GetNewsForApp/v2/?appid=${juego.appid}&count=1&maxlength=600`;
-            const proxyUrl = `/api/proxy?url=${encodeURIComponent(steamApi)}`;
-            
-            const respuesta = await fetch(proxyUrl);
+            const dominioApi = ["https://api", "steampowered", "com"].join(".");
+            const ruta = "/ISteamNews/GetNewsForApp/v2/?appid=" + juego.appid + "&count=1&maxlength=600";
+            const respuesta = await fetch("/api/proxy?url=" + encodeURIComponent(dominioApi + ruta));
             const dataSteam = await respuesta.json();
-
 
             if (dataSteam.appnews && dataSteam.appnews.newsitems && dataSteam.appnews.newsitems.length > 0) {
                 const noticia = dataSteam.appnews.newsitems[0];
@@ -102,15 +156,18 @@ async function obtenerNoticiasSteamEnVivo() {
                 });
 
                 const textoLimpio = noticia.contents.replace(/<[^>]*>?/gm, "").trim();
+                const dominioImg = ["https://cdn", "akamai", "steamstatic", "com"].join(".");
 
                 resultados.push({
+                    appid: juego.appid,
                     juego: juego.nombre,
-                    imagen: "https://cdn.akamai.steamstatic.com" + `/steam/apps/${juego.appid}/header.jpg`,
+                    imagen: dominioImg + "/steam/apps/" + juego.appid + "/header.jpg",
                     version: noticia.title.slice(0, 26) + (noticia.title.length > 26 ? "..." : ""),
                     fecha: `Publicado: ${fechaFormateada}`,
                     resumen: textoLimpio.slice(0, 140) + "...",
                     detalleCompleto: `${noticia.title}\n\n${textoLimpio}`,
-                    url: noticia.url
+                    url: noticia.url,
+                    esBusquedaGlobal: true
                 });
             }
         } catch (error) {
@@ -123,24 +180,21 @@ async function obtenerNoticiasSteamEnVivo() {
     return resultados;
 }
 
-// Buscar CUALQUIER juego en internet para ver de qué trata, portada y última noticia
 async function buscarJuegoEnInternet() {
     const termino = document.getElementById("input-juego-global").value.trim();
     if (!termino) return;
 
-    actualizarEstado(`⏳ Buscando "${termino}" en base de datos global...`, "#facc15");
-    const contenedor = document.getElementById("contenedor-noticias");
-    contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #cbd5e1;">Buscando información de "${termino}"...</p>`;
+    actualizarEstado(`⏳ Buscando "${termino}"...`, "#facc15");
+    mostrarSkeletons(6);
 
     try {
-        const searchApi = "https://store.steampowered.com" + `/api/storesearch/?term=${encodeURIComponent(termino)}&l=spanish&cc=MX`;
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(searchApi)}`;
-        
-        const resp = await fetch(proxyUrl);
+        const dominioStore = ["https://store", "steampowered", "com"].join(".");
+        const rutaBusqueda = "/api/storesearch/?term=" + encodeURIComponent(termino) + "&l=spanish&cc=MX";
+        const resp = await fetch("/api/proxy?url=" + encodeURIComponent(dominioStore + rutaBusqueda));
         const data = await resp.json();
 
         if (!data.items || data.items.length === 0) {
-            contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #f87171;">No se encontraron resultados para "${termino}". Intenta con otro nombre.</p>`;
+            document.getElementById("contenedor-noticias").innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #f87171;">No se encontraron resultados para "${termino}".</p>`;
             actualizarEstado("● Sin resultados", "#f87171");
             return;
         }
@@ -151,9 +205,9 @@ async function buscarJuegoEnInternet() {
             imagen: item.tiny_image ? item.tiny_image.replace("capsule_sm_120", "header") : "",
             version: item.price ? `$${(item.price.final / 100).toFixed(2)} MXN` : "Gratis / Sin precio",
             fecha: `ID Steam: ${item.id}`,
-            resumen: "Haz clic aquí para cargar la sinopsis completa, desarrollador y sus últimas noticias.",
+            resumen: "Haz clic aquí para ver galería de capturas, sinopsis completa y sus últimas noticias.",
             detalleCompleto: "Cargando descripción oficial del juego...",
-            url: ["https://store", "steampowered", "com"].join(".") + "/app/" + item.id,
+            url: dominioStore + "/app/" + item.id,
             esBusquedaGlobal: true
         }));
 
@@ -163,23 +217,23 @@ async function buscarJuegoEnInternet() {
 
     } catch (error) {
         console.error(error);
-        contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #f87171;">Error al conectar con el buscador. Intenta de nuevo.</p>`;
+        document.getElementById("contenedor-noticias").innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #f87171;">Error al conectar con el buscador. Intenta de nuevo.</p>`;
         actualizarEstado("● Error de conexión", "#f87171");
     }
 }
 
-// Cargar sinopsis completa y última noticia cuando el usuario hace clic en un juego buscado
 async function cargarFichaCompletaJuego(item) {
-    document.getElementById("modal-cuerpo").textContent = "⏳ Descargando sinopsis, géneros y últimas noticias del juego...";
-    
-    try {
-        // 1. Obtener de qué trata el juego (AppDetails)
-            const dominioStore = ["https://store", "steampowered", "com"].join(".");
-      const detailsApi = dominioStore + "/api/appdetails?appids=" + item.appid + "&l=spanish";
-      const respDetails = await fetch("/api/proxy?url=" + encodeURIComponent(detailsApi));
-      const rawDetails = await respDetails.json();
-      const appData = rawDetails[item.appid];
+    document.getElementById("modal-cuerpo").textContent = "⏳ Descargando sinopsis, capturas de pantalla y últimas noticias...";
+    const galeriaEl = document.getElementById("modal-galeria");
+    galeriaEl.innerHTML = "";
+    galeriaEl.classList.add("oculto");
 
+    try {
+        const dominioStore = ["https://store", "steampowered", "com"].join(".");
+        const detailsApi = dominioStore + "/api/appdetails?appids=" + item.appid + "&l=spanish";
+        const respDetails = await fetch("/api/proxy?url=" + encodeURIComponent(detailsApi));
+        const rawDetails = await respDetails.json();
+        const appData = rawDetails[item.appid];
 
         let textoFinal = "";
 
@@ -189,6 +243,16 @@ async function cargarFichaCompletaJuego(item) {
             const devs = info.developers ? info.developers.join(", ") : "Desconocido";
             const fechaLanzamiento = info.release_date ? info.release_date.date : "Desconocida";
 
+            if (info.screenshots && info.screenshots.length > 0) {
+                info.screenshots.slice(0, 5).forEach(cap => {
+                    const imgCap = document.createElement("img");
+                    imgCap.src = cap.path_thumbnail;
+                    imgCap.onclick = () => { document.getElementById("modal-imagen").src = cap.path_full; };
+                    galeriaEl.appendChild(imgCap);
+                });
+                galeriaEl.classList.remove("oculto");
+            }
+
             textoFinal += `📖 DE QUÉ TRATA:\n${info.short_description}\n\n`;
             textoFinal += `🏷️ Géneros: ${generos}\n`;
             textoFinal += `🛠️ Desarrollador: ${devs}\n`;
@@ -197,15 +261,13 @@ async function cargarFichaCompletaJuego(item) {
             textoFinal += "No se pudo obtener la descripción detallada en español.\n";
         }
 
-        // 2. Obtener la última noticia o actualización si existe
-             const dominioApi = ["https://api", "steampowered", "com"].join(".");
-      const newsApi = dominioApi + "/ISteamNews/GetNewsForApp/v2/?appid=" + item.appid + "&count=1&maxlength=400";
-      const respNews = await fetch("/api/proxy?url=" + encodeURIComponent(newsApi));
-      const newsData = await respNews.json();
+        const dominioApi = ["https://api", "steampowered", "com"].join(".");
+        const newsApi = dominioApi + "/ISteamNews/GetNewsForApp/v2/?appid=" + item.appid + "&count=1&maxlength=500";
+        const respNews = await fetch("/api/proxy?url=" + encodeURIComponent(newsApi));
+        const newsData = await respNews.json();
 
         if (newsData.appnews && newsData.appnews.newsitems && newsData.appnews.newsitems.length > 0) {
             const ultimaNoticia = newsData.appnews.newsitems[0];
-
             const limpio = ultimaNoticia.contents.replace(/<[^>]*>?/gm, "").trim();
             textoFinal += `\n────────────────────\n📰 ÚLTIMA ACTUALIZACIÓN / NOTICIA:\n${ultimaNoticia.title}\n\n${limpio}`;
         } else {
@@ -213,9 +275,30 @@ async function cargarFichaCompletaJuego(item) {
         }
 
         document.getElementById("modal-cuerpo").textContent = textoFinal;
+        document.getElementById("btn-traducir").classList.remove("oculto");
 
     } catch (e) {
-        document.getElementById("modal-cuerpo").textContent = "Ocurrió un error al descargar los detalles del juego. Puedes verlos en el enlace oficial de abajo.";
+        document.getElementById("modal-cuerpo").textContent = "Ocurrió un error al descargar los detalles del juego.";
+    }
+}
+
+async function traducirContenidoModal() {
+    const cuerpoEl = document.getElementById("modal-cuerpo");
+    const btn = document.getElementById("btn-traducir");
+    const textoOriginal = cuerpoEl.textContent;
+
+    btn.textContent = "⏳ Traduciendo...";
+    btn.disabled = true;
+
+    try {
+        const resp = await fetch("/api/translate?text=" + encodeURIComponent(textoOriginal));
+        const data = await resp.json();
+        if (data.translated) {
+            cuerpoEl.textContent = data.translated;
+            btn.textContent = "✅ Traducido al Español";
+        }
+    } catch (e) {
+        btn.textContent = "❌ Error al traducir";
     }
 }
 
@@ -232,7 +315,10 @@ function renderizarTarjetas(lista) {
     contenedor.innerHTML = "";
 
     if (!lista || lista.length === 0) {
-        contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">No hay elementos para mostrar.</p>`;
+        const msg = plataformaActual === "favoritos"
+            ? "Aún no tienes juegos favoritos. Haz clic en la estrella ⭐ de cualquier juego para guardarlo aquí."
+            : "No hay elementos para mostrar.";
+        contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">${msg}</p>`;
         return;
     }
 
@@ -242,6 +328,13 @@ function renderizarTarjetas(lista) {
         tarjeta.onclick = () => abrirModal(item);
 
         const imgHtml = item.imagen ? `<img src="${item.imagen}" alt="${item.juego}" class="card-img" onerror="this.style.display='none'">` : "";
+        const favActivo = esFavorito(item.juego);
+
+        const btnFav = document.createElement("button");
+        btnFav.className = `btn-fav-card ${favActivo ? "activo" : ""}`;
+        btnFav.textContent = favActivo ? "★" : "☆";
+        btnFav.title = favActivo ? "Quitar de favoritos" : "Guardar en favoritos";
+        btnFav.onclick = (e) => toggleFavorito(e, item);
 
         tarjeta.innerHTML = `
             <div>
@@ -253,9 +346,10 @@ function renderizarTarjetas(lista) {
                 <span class="fecha">${item.fecha}</span>
                 <p>${item.resumen}</p>
             </div>
-            <span class="leer-mas">Clic para ver sinopsis y detalles →</span>
+            <span class="leer-mas">Clic para ver galería, sinopsis y detalles →</span>
         `;
 
+        tarjeta.appendChild(btnFav);
         contenedor.appendChild(tarjeta);
     });
 }
@@ -267,6 +361,13 @@ function abrirModal(item) {
     document.getElementById("modal-cuerpo").textContent = item.detalleCompleto;
     document.getElementById("modal-link").href = item.url;
 
+    const btnTraducir = document.getElementById("btn-traducir");
+    btnTraducir.textContent = "🌐 Traducir notas al Español";
+    btnTraducir.disabled = false;
+    btnTraducir.classList.remove("oculto");
+
+    document.getElementById("modal-galeria").classList.add("oculto");
+
     const imgEl = document.getElementById("modal-imagen");
     if (item.imagen) {
         imgEl.src = item.imagen;
@@ -277,7 +378,7 @@ function abrirModal(item) {
 
     document.getElementById("modal-detalle").classList.remove("oculto");
 
-    if (item.esBusquedaGlobal) {
+    if (item.esBusquedaGlobal && item.appid) {
         cargarFichaCompletaJuego(item);
     }
 }
@@ -316,7 +417,7 @@ async function cambiarPlataforma(plataforma, botonSeleccionado) {
     if (plataforma === "buscar_global") {
         cajaLocal.classList.add("oculto");
         cajaGlobal.classList.remove("oculto");
-        document.getElementById("contenedor-noticias").innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">Escribe el nombre de cualquier videojuego arriba y presiona <b>Buscar</b> para ver su portada, sinopsis y última actualización.</p>`;
+        document.getElementById("contenedor-noticias").innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">Escribe el nombre de cualquier videojuego arriba y presiona <b>Enter</b> o <b>Buscar</b>.</p>`;
         actualizarEstado("● Buscador Global Listo", "#a855f7");
         return;
     } else {
@@ -324,7 +425,10 @@ async function cambiarPlataforma(plataforma, botonSeleccionado) {
         cajaLocal.classList.remove("oculto");
     }
 
-    if (plataforma === "steam") {
+    if (plataforma === "favoritos") {
+        noticiasActuales = [...favoritosGuardados];
+        actualizarEstado(`● ${noticiasActuales.length} guardados`, "#f59e0b");
+    } else if (plataforma === "steam") {
         noticiasActuales = await obtenerNoticiasSteamEnVivo();
     } else {
         noticiasActuales = datosConsolas[plataforma];
@@ -338,18 +442,20 @@ async function cambiarPlataforma(plataforma, botonSeleccionado) {
 function forzarActualizacion() {
     if (plataformaActual === "buscar_global") {
         buscarJuegoEnInternet();
-    } else {
+    } else if (plataformaActual !== "favoritos") {
         const botonActivo = document.querySelector(".tab-btn.active");
         cambiarPlataforma(plataformaActual, botonActivo);
     }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    actualizarContadorFavs();
     const primerBoton = document.querySelector(".tab-btn.active");
     cambiarPlataforma("xbox", primerBoton);
     setInterval(() => {
-        if (plataformaActual !== "buscar_global") {
+        if (plataformaActual !== "buscar_global" && plataformaActual !== "favoritos") {
             forzarActualizacion();
         }
     }, 300000);
 });
+
